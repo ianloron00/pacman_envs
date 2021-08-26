@@ -8,9 +8,10 @@ import matplotlib.pyplot as plt
 # import allStuff
 
 name_model='discrete_pacman'
-dir="tmp/"
+directory="tmp/"
 
 env=PacmanEnv.make(zoom=2.0)
+# print(dir(env))
 
 #### to test whether the standard functions are working ####
 # episodes=10
@@ -33,13 +34,15 @@ env=PacmanEnv.make(zoom=2.0)
 # env.close()
 
 
-# applying stable_baselines models.
+#### applying stable_baselines models.
 model=DQN('MlpPolicy', env, verbose=1)
-if os.path.exists(dir + name_model+".zip"):
+# print(dir(model))
+
+if os.path.exists(directory + name_model+".zip"):
     model.load(name_model+".zip")
 
 
-model.learn(total_timesteps=1e3) # 1e5
+model.learn(total_timesteps=1e2) # 1e5
 model.save(name_model)
 evaluate_policy(model, env, n_eval_episodes=10, render=False, return_episode_rewards=False)
 env.close()
