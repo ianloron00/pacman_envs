@@ -48,7 +48,8 @@ if os.path.exists(directory + name_model+".zip"):
 else:
     timesteps = 1e5
     model.learn(total_timesteps=timesteps) 
-
+    
+    # plot learning rewarding results 
     plot_results([directory], timesteps, results_plotter.X_TIMESTEPS, "DQN Pacman")
     plt.show()
 
@@ -57,7 +58,8 @@ else:
 
 rewards = evaluate_policy(model, env, n_eval_episodes=10, render=(True and not monitor), return_episode_rewards=True)
 print(rewards)
-# for i in range(len(rewards[0])):
+
+# plot results from policy evaluation
 scores=rewards[0]
 plt.plot(np.arange(len(scores)) + 1, scores)
 
