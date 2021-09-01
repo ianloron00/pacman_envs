@@ -1,6 +1,8 @@
 # Written by Ian Loron de Almeida.
 
-from AgentFiles.FeaturesPolicy import Extractor
+from numpy.lib.utils import info
+# from AgentFiles.FeaturesPolicy import Extractor
+from FeaturesEnvSpace import Extractor
 import math, util
 from tokenize import String
 import gym
@@ -50,76 +52,79 @@ class PacmanEnv(gym.Env):
         self.args = ""
         self.game = None
         self.action_space=None
+        self.observation_space=None
         self.rules = None
         self.reward = 0
         self.last_score = 0
         self.shape = None
+        self.info = {}
+        self.features = None
         self.featExtractor = util.lookup('Extractor', globals())()
-
-        self.action_space = np.arange(0,5) # Discrete(5)
         self.converted_action_space = [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST, Directions.STOP]
         """
         # Feature Extractor has the following features:
         # bias, n-[scared]-1-step, n-2-steps, n-[active]-1-step, n-2-steps, # (eats-food),
         # (closest-food), scaredTime, run-to-catch
         """
-        n_ghosts = 2 # self.game.state.data.getNumAgents() - 1
-        obs_shape = np.array((1.0, n_ghosts, n_ghosts, n_ghosts, n_ghosts, 1.0, 1.0, 1.0, 1.0))        
-        self.observation_space = spaces.Box(low=[0]*obs_shape, high=obs_shape, 
-                                 shape=obs_shape.shape, dtype=np.float64) 
 
     def make(**args):
+        # create pacman environment
         pacman = PacmanEnv()
+
+        # initialize a game
         pacman.initialize(**args)
         return pacman
     
-    def reset(self): 
+    def reset(self):
+        # reset reward variables
         self.reward = 0 
         self.last_score = 0
+        
+        # create game        
         self.game = self.createGame(**self.args.copy())
-        # self.action_space = self.game.data.getLegalPacmanActions()
-        return self.observation_space.low # ??
 
-    def render(self):
+        # return possible pacman movements
+        return self.observation_space.low
+
+    def render(self, mode='human'):
         self.game.render = True
-        return
 
-    def update_obs_space(self, state, action):
+    def get_features(self, action):
+        # extract features
         features = self.featExtractor.getFeatures(self.game.state, action)
 
         # get values from dictionary, list them and transform into numpy array.
-        print("#####################")
-        print(list(features.values()))
         return np.array(list(features.values()))
 
-    def update_action_space(self):
-        legal_actions = self.game.state.getLegalPacmanActions()
-        all_actions = self.converted_action_space
-        return [i for i in range(len(all_actions)) for j in legal_actions if all_actions[i] == j]
-    
+    def validade_action(self, action):
+        if action not in self.game.state.getLegalPacmanActions():
+            return Directions.STOP
+        return action
+
+    def ActionToValue(self, action):
+        if type(action) == type(Directions):
+            return np.where(action == self.converted_action_space)
+
     def valueToAction(self, action):
-        return self.converted_action_space[action]
+        if type(action)==type(1):
+            action = self.converted_action_space[action]
+        return self.validade_action(action)
 
     def step(self, action):
-        state = self.game.state
-
         # convert action to Discrete.
         action = self.valueToAction(action)
 
         self.game.step(action=action)
 
+        # update state
+        self.features = self.get_features(action)
+
         # update reward
         self.reward = self.game.state.data.score - self.last_score
         self.last_score = self.game.state.data.score
 
-        # redefine observation_space
-        self.observation_space = self.update_obs_space(state, action)
-
-        # update action space
-        self.action_space = self.update_action_space()
-
         # return all information needed        
-        return (self.observation_space, self.reward, self.game.gameOver, "dont know what to say")
+        return (self.features, self.reward, self.game.gameOver, self.info)
     
     def close(self):
         self.game.display.finish() 
@@ -137,8 +142,18 @@ class PacmanEnv(gym.Env):
         self.args = readCommand(myArgs)
         self.game = self.createGame(**self.args.copy())
 
-        self.action_space = self.update_action_space()
-        # self.observation_space = self.update_obs_space()
+        # walls = self.game.state.data.layout.walls
+        # self.action_space = Discrete(5*(walls.width*walls.height))
+        
+        # set action space
+        self.action_space = Discrete(5)
+
+        n_ghosts = self.game.state.getNumAgents() - 1
+        obs_shape = np.array((1.0, n_ghosts, n_ghosts, n_ghosts, n_ghosts, 1.0, 1.0)) #, (0))) # , 1.0, 1.0))        
+
+        # set observation space        
+        self.observation_space = spaces.Box(low=[0]*obs_shape, high=obs_shape, 
+                                 shape=obs_shape.shape, dtype=np.float64) 
 
     def createGame(self, layout, pacman, ghosts, display, numGames, record=False, numTraining = 0, catchExceptions=False, timeout=30 ):
         import __main__
@@ -153,17 +168,3 @@ class PacmanEnv(gym.Env):
 
     def _save_obs(self):
         return self.observation_space
-
-# temporary
-# def __getInput__(legal):  
-#     cin = str(input())
-#     action = Directions.STOP
-#     if cin == 'a' and Directions.WEST in legal:
-#         action = Directions.WEST
-#     elif cin == 'd' and Directions.EAST in legal:
-#         action = Directions.EAST
-#     elif cin == 'w' and Directions.NORTH in legal:
-#         action = Directions.NORTH
-#     elif cin == 's' and Directions.SOUTH in legal:
-#         action = Directions.SOUTH
-#     return action

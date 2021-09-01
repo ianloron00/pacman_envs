@@ -531,7 +531,10 @@ class Game:
         self.totalAgentTimes = [0 for agent in agents]
         self.totalAgentTimeWarnings = [0 for agent in agents]
         self.agentTimeout = False
+        
+        self.moved = False
         self.render=render
+
         import io
         self.agentOutput = [io.StringIO() for agent in agents]
 
@@ -576,7 +579,11 @@ class Game:
         """
         Main control loop for game play.
         """
-        if self.state.data._agentMoved == None and self.render:
+
+        self.moved = (self.state.data._agentMoved == None) or self.moved
+        if self.moved and self.render:
+            self.moved = False
+            
             self.display.initialize(self.state.data)
             self.numMoves = 0
 

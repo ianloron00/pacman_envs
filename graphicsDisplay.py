@@ -87,6 +87,7 @@ class InfoPane:
         self.height = INFO_PANE_HEIGHT
         self.fontSize = 24
         self.textColor = PACMAN_COLOR
+        
         self.drawPane()
 
     def toScreen(self, pos, y = None):
