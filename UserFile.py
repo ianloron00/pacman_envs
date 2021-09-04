@@ -49,22 +49,24 @@ else:
     timesteps = 1e5
     model.learn(total_timesteps=timesteps) 
     
-    # plot learning rewarding results 
+    # plot rewards of training 
     plot_results([directory], timesteps, results_plotter.X_TIMESTEPS, "DQN Pacman")
     plt.show()
 
     # save model
     model.save(directory + name_model)
 
-rewards = evaluate_policy(model, env, n_eval_episodes=10, render=(True and not monitor), return_episode_rewards=True)
-print(rewards)
+rewards = evaluate_policy(model, env, n_eval_episodes=10, render=(False and not monitor), return_episode_rewards=True)
 
 # plot results from policy evaluation
 scores=rewards[0]
-plt.plot(np.arange(len(scores)) + 1, scores)
 
+plt.figure(figsize=(20,10))
+plt.plot(np.arange(len(scores)) + 1, scores)
 plt.title("Pacman reward evaluation | DQN")
+plt.savefig(directory + "Pacman reward evaluation | DQN" + '.png')
 plt.show()
+plt.close()
 
 env.close()
 

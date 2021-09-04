@@ -64,7 +64,7 @@ class PacmanEnv(gym.Env):
         """
         # Feature Extractor has the following features:
         # bias, n-[scared]-1-step, n-2-steps, n-[active]-1-step, n-2-steps, # (eats-food),
-        # (closest-food), scaredTime, run-to-catch
+        # (closest-food)
         """
 
     def make(**args):
@@ -83,8 +83,8 @@ class PacmanEnv(gym.Env):
         # create game        
         self.game = self.createGame(**self.args.copy())
 
-        # return possible pacman movements
-        return self.observation_space.low
+        # should return state.
+        return self.get_features(Directions.STOP) 
 
     def render(self, mode='human'):
         self.game.render = True
@@ -106,8 +106,10 @@ class PacmanEnv(gym.Env):
             return np.where(action == self.converted_action_space)
 
     def valueToAction(self, action):
+        # actions can be either numbers or Directions.
         if type(action)==type(1):
             action = self.converted_action_space[action]
+        
         return self.validade_action(action)
 
     def step(self, action):
@@ -129,6 +131,9 @@ class PacmanEnv(gym.Env):
     def close(self):
         self.game.display.finish() 
 
+    """
+    'initialize' takes all parameters and convert to a string, to reuse former pacman functions. 
+    """
     def initialize(self, layout=None, numTraining=None, numGames=None, numGhosts=None, zoom=None, display=2):
         myArgs=[]
         if layout: myArgs.append("-l"+layout)
@@ -142,18 +147,24 @@ class PacmanEnv(gym.Env):
         self.args = readCommand(myArgs)
         self.game = self.createGame(**self.args.copy())
 
-        # walls = self.game.state.data.layout.walls
-        # self.action_space = Discrete(5*(walls.width*walls.height))
-        
+        self.initialize_action_space()
+        self.initialize_observation_space()
+
+    def initialize_action_space(self):        
         # set action space
         self.action_space = Discrete(5)
 
+        # walls = self.game.state.data.layout.walls
+        # self.action_space = Discrete(5*(walls.width*walls.height))
+
+
+    def initialize_observation_space(self):
         n_ghosts = self.game.state.getNumAgents() - 1
-        obs_shape = np.array((1.0, n_ghosts, n_ghosts, n_ghosts, n_ghosts, 1.0, 1.0)) #, (0))) # , 1.0, 1.0))        
+        obs_shape = np.array((1.0, n_ghosts, n_ghosts, n_ghosts, n_ghosts, 1.0, 1.0)) #, (0)))        
 
         # set observation space        
         self.observation_space = spaces.Box(low=[0]*obs_shape, high=obs_shape, 
-                                 shape=obs_shape.shape, dtype=np.float64) 
+                                 shape=obs_shape.shape, dtype=np.float64)
 
     def createGame(self, layout, pacman, ghosts, display, numGames, record=False, numTraining = 0, catchExceptions=False, timeout=30 ):
         import __main__
@@ -162,6 +173,7 @@ class PacmanEnv(gym.Env):
         rules = ClassicGameRules(timeout)
         return rules.newGame(layout, pacman, ghosts, display)
 
+    # returns random Direction.
     def getRandomAction(self):
         legal = self.game.state.getLegalPacmanActions()
         return np.random.choice(legal) if legal != [] else None
