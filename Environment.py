@@ -59,8 +59,9 @@ class PacmanEnv(gym.Env):
         self.shape = None
         self.info = {}
         self.features = None
+        self.state = np.array([])
         self.featExtractor = util.lookup('Extractor', globals())()
-        self.converted_action_space = [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST, Directions.STOP]
+        self.converted_action_space = [Directions.STOP, Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]
         """
         # Feature Extractor has the following features:
         # bias, n-[scared]-1-step, n-2-steps, n-[active]-1-step, n-2-steps, # (eats-food),
@@ -75,6 +76,7 @@ class PacmanEnv(gym.Env):
         pacman.initialize(**args)
         return pacman
     
+
     def reset(self):
         # reset reward variables
         self.reward = 0 
@@ -84,10 +86,39 @@ class PacmanEnv(gym.Env):
         self.game = self.createGame(**self.args.copy())
 
         # should return state.
-        return self.get_features(Directions.STOP) 
+        self.state = self.get_features(Directions.STOP)
+        return self.state
+
 
     def render(self, mode='human'):
         self.game.render = True
+
+    
+    def step(self, action):
+
+        # convert action to Discrete.
+        action = self.valueToAction(action)
+
+        self.game.step(action=action)
+
+        # update features
+        self.features = self.get_features(action)
+
+        #update state
+        # np.append(self.state, self.features)
+        # if self.state.size > 5 : self.state = self.state[1:]
+        self.state = self.features
+
+        # update reward
+        self.reward = self.game.state.data.score - self.last_score
+        self.last_score = self.game.state.data.score
+
+        return (self.state, self.reward, self.game.gameOver, self.info)
+    
+
+    def close(self):
+        self.game.display.finish() 
+
 
     def get_features(self, action):
         # extract features
@@ -96,40 +127,25 @@ class PacmanEnv(gym.Env):
         # get values from dictionary, list them and transform into numpy array.
         return np.array(list(features.values()))
 
+
     def validade_action(self, action):
         if action not in self.game.state.getLegalPacmanActions():
             return Directions.STOP
         return action
 
+
     def ActionToValue(self, action):
-        if type(action) == type(Directions):
+        if type(action) == type(Directions.STOP):
             return np.where(action == self.converted_action_space)
+
 
     def valueToAction(self, action):
         # actions can be either numbers or Directions.
-        if type(action)==type(1):
+        if type(action) != type(Directions.STOP):
             action = self.converted_action_space[action]
-        
+
         return self.validade_action(action)
 
-    def step(self, action):
-        # convert action to Discrete.
-        action = self.valueToAction(action)
-
-        self.game.step(action=action)
-
-        # update state
-        self.features = self.get_features(action)
-
-        # update reward
-        self.reward = self.game.state.data.score - self.last_score
-        self.last_score = self.game.state.data.score
-
-        # return all information needed        
-        return (self.features, self.reward, self.game.gameOver, self.info)
-    
-    def close(self):
-        self.game.display.finish() 
 
     """
     'initialize' takes all parameters and convert to a string, to reuse former pacman functions. 
@@ -150,21 +166,18 @@ class PacmanEnv(gym.Env):
         self.initialize_action_space()
         self.initialize_observation_space()
 
-    def initialize_action_space(self):        
+    def initialize_action_space(self):      
         # set action space
         self.action_space = Discrete(5)
 
-        # walls = self.game.state.data.layout.walls
-        # self.action_space = Discrete(5*(walls.width*walls.height))
-
-
     def initialize_observation_space(self):
-        n_ghosts = self.game.state.getNumAgents() - 1
-        obs_shape = np.array((1.0, n_ghosts, n_ghosts, n_ghosts, n_ghosts, 1.0, 1.0)) #, (0)))        
+        obs_shape_high = np.array([0.1] + [0.2]*4  + [0.1]*(Extractor.number_features - 5))
+        obs_shape_low  = np.array([0.1] + [0.0]*(Extractor.number_features-1))
 
-        # set observation space        
-        self.observation_space = spaces.Box(low=[0]*obs_shape, high=obs_shape, 
-                                 shape=obs_shape.shape, dtype=np.float64)
+        # set observation space
+        self.observation_space = spaces.Box(low=obs_shape_low, high=obs_shape_high, 
+                                 shape=obs_shape_high.shape, dtype=np.float64)
+
 
     def createGame(self, layout, pacman, ghosts, display, numGames, record=False, numTraining = 0, catchExceptions=False, timeout=30 ):
         import __main__
@@ -173,10 +186,12 @@ class PacmanEnv(gym.Env):
         rules = ClassicGameRules(timeout)
         return rules.newGame(layout, pacman, ghosts, display)
 
+
     # returns random Direction.
     def getRandomAction(self):
         legal = self.game.state.getLegalPacmanActions()
         return np.random.choice(legal) if legal != [] else None
+
 
     def _save_obs(self):
         return self.observation_space

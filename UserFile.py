@@ -6,16 +6,17 @@ from stable_baselines3 import DQN
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common import results_plotter
-from stable_baselines3.common.results_plotter import load_results, ts2xy, plot_results
+from stable_baselines3.common.results_plotter import plot_results
 import matplotlib.pyplot as plt
-# import allStuff
+from Callback import *
+
 
 name_model='discrete_pacman'
 directory="tmp/"
-monitor = False
+isTraining = False
 
 env=PacmanEnv.make(zoom=2.0)
-if monitor: env = Monitor(env, directory)
+env=Monitor(env, directory) 
 
 #### to test whether the standard functions are working ####
 # episodes=1
@@ -38,35 +39,41 @@ if monitor: env = Monitor(env, directory)
 
 
 #### applying stable_baselines models.
-model=DQN('MlpPolicy', env, verbose=1)
+model=DQN('MlpPolicy', env, exploration_fraction=0.2, exploration_initial_eps=1.0, exploration_final_eps=0.03, verbose=0)
 
 if not os.path.exists(directory):
     os.mkdir(directory)
 
 if os.path.exists(directory + name_model+".zip"):
-    model.load(directory + name_model+".zip")
-else:
+    print("file loaded.")
+    model.load(directory + name_model + ".zip")
+
+if isTraining:
     timesteps = 1e5
-    model.learn(total_timesteps=timesteps) 
-    
+
+    callback = SaveOnBestTrainingRewardCallback(check_freq=10000, log_dir=directory, name=name_model)
+    model.learn(total_timesteps=timesteps, callback=callback)
+
     # plot rewards of training 
     plot_results([directory], timesteps, results_plotter.X_TIMESTEPS, "DQN Pacman")
+    plt.savefig(directory + "DQN Pacman" + '.png')
     plt.show()
 
     # save model
     model.save(directory + name_model)
 
-rewards = evaluate_policy(model, env, n_eval_episodes=10, render=(False and not monitor), return_episode_rewards=True)
+else:
+    rewards = evaluate_policy(model, env, n_eval_episodes=10, render=True, return_episode_rewards=True)
 
-# plot results from policy evaluation
-scores=rewards[0]
+    # plot results from policy evaluation
+    scores=rewards[0]
 
-plt.figure(figsize=(20,10))
-plt.plot(np.arange(len(scores)) + 1, scores)
-plt.title("Pacman reward evaluation | DQN")
-plt.savefig(directory + "Pacman reward evaluation | DQN" + '.png')
-plt.show()
-plt.close()
+    plt.figure(figsize=(20,10))
+    plt.plot(np.arange(len(scores)) + 1, scores)
+    plt.title("Pacman reward evaluation | DQN")
+    plt.savefig(directory + "Pacman reward evaluation | DQN" + '.png')
+    plt.show()
+    plt.close()
 
 env.close()
 
