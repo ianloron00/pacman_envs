@@ -79,14 +79,15 @@ class PacmanEnv(gym.Env):
 
     def reset(self):
         # reset reward variables
-        self.reward = 0 
+        self.reward = 0
         self.last_score = 0
         
         # create game        
         self.game = self.createGame(**self.args.copy())
 
         # should return state.
-        self.state = self.get_features(Directions.STOP)
+        self.features = self.get_features(Directions.STOP)
+        self.state = np.stack([self.features] * 4) # , axis = 2)
         return self.state
 
 
@@ -105,10 +106,9 @@ class PacmanEnv(gym.Env):
         self.features = self.get_features(action)
 
         #update state
-        # np.append(self.state, self.features)
-        # if self.state.size > 5 : self.state = self.state[1:]
-        self.state = self.features
-
+        # self.state = np.append(self.state[:, 1: ], np.expand_dims(self.features, 2), axis = 2)
+        self.state = np.vstack((self.state[:-1] , self.features))
+        
         # update reward
         self.reward = self.game.state.data.score - self.last_score
         self.last_score = self.game.state.data.score
@@ -171,8 +171,11 @@ class PacmanEnv(gym.Env):
         self.action_space = Discrete(5)
 
     def initialize_observation_space(self):
-        obs_shape_high = np.array([0.1] + [0.2]*4  + [0.1]*(Extractor.number_features - 5))
-        obs_shape_low  = np.array([0.1] + [0.0]*(Extractor.number_features-1))
+        obs_shape_high = np.array(4 * [[1.0] + [2.0]*4  + [1.0]*(Extractor.number_features - 5) ] )
+        obs_shape_low  = np.array(4 * [[1.0] + [-1.0]*(Extractor.number_features-1) ] )
+
+        # obs_shape_high = np.array(4 * [[0.1] + [0.2]*4  + [0.1]*(Extractor.number_features - 5) ] )
+        # obs_shape_low  = np.array(4 * [[0.1] + [0.0]*(Extractor.number_features-1) ] )
 
         # set observation space
         self.observation_space = spaces.Box(low=obs_shape_low, high=obs_shape_high, 
@@ -193,5 +196,5 @@ class PacmanEnv(gym.Env):
         return np.random.choice(legal) if legal != [] else None
 
 
-    def _save_obs(self):
-        return self.observation_space
+    # def _save_obs(self):
+        # return self.observation_space

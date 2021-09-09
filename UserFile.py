@@ -13,7 +13,7 @@ from Callback import *
 
 name_model='discrete_pacman'
 directory="tmp/"
-isTraining = False
+isTraining = True
 
 env=PacmanEnv.make(zoom=2.0)
 env=Monitor(env, directory) 
@@ -49,7 +49,7 @@ if os.path.exists(directory + name_model+".zip"):
     model.load(directory + name_model + ".zip")
 
 if isTraining:
-    timesteps = 1e5
+    timesteps = 3e4
 
     callback = SaveOnBestTrainingRewardCallback(check_freq=10000, log_dir=directory, name=name_model)
     model.learn(total_timesteps=timesteps, callback=callback)
