@@ -13,40 +13,26 @@ from Callback import *
 
 name_model='discrete_pacman'
 directory="tmp/"
-isTraining = True
+isTraining = False
 
 env=PacmanEnv.make(zoom=2.0)
 env=Monitor(env, directory) 
 
-#### to test whether the standard functions are working ####
-# episodes=1
-# for eps in range(1, episodes+1):
-#     # initializes each episode
-    
-#     state = env.reset() 
-#     done = False
-#     score = 0
-
-#     while not done: # steps in episode
-#         env.render()
-#         ####  env.action_space.sample()
-#         action = env.getRandomAction()
-#         new_state, reward, done, info = env.step(action)
-#         score+=reward
-
-#     print('Episode: {} Score: {}'.format(eps, score))
-# env.close()
-
-
 #### applying stable_baselines models.
-model=DQN('MlpPolicy', env, exploration_fraction=0.2, exploration_initial_eps=1.0, exploration_final_eps=0.03, verbose=0)
+"""
+define replay-buffer:
+buffer_size=1000000, learning_starts=50000
+
+Change MlpPolicy from 64 x 64  to 128 x 64.
+"""
+model = DQN('MlpPolicy',env, buffer_size=20000, learning_starts=2000, exploration_fraction=0.3, exploration_initial_eps=1.0, exploration_final_eps=0.05, verbose=0)
 
 if not os.path.exists(directory):
     os.mkdir(directory)
 
 if os.path.exists(directory + name_model+".zip"):
-    print("file loaded.")
     model.load(directory + name_model + ".zip")
+    print("file loaded.")
 
 if isTraining:
     timesteps = 3e4
@@ -63,7 +49,7 @@ if isTraining:
     model.save(directory + name_model)
 
 else:
-    rewards = evaluate_policy(model, env, n_eval_episodes=10, render=True, return_episode_rewards=True)
+    rewards = evaluate_policy(model, env, n_eval_episodes=10, render=False, return_episode_rewards=True)
 
     # plot results from policy evaluation
     scores=rewards[0]
