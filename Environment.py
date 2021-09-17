@@ -99,6 +99,8 @@ class PacmanEnv(gym.Env):
         if not (self.eps % 200):
             print(str((action, self.valueToAction(action), self.reward)))
 
+        # print(str((action, self.valueToAction(action), self.reward)))
+
         # convert action to Discrete.
         action = self.valueToAction(action)
 

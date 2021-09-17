@@ -111,10 +111,10 @@ class PacmanState:
                 delta = 0
 
             if pacman.last_action != None and action == Directions.REVERSE[pacman.last_action]:
-                delta -= 1.0
+                delta -= 9
             
             if action == 'Stop':
-                delta -= 8.0    
+                delta -= 10    
 
             pacman.last_score = new_score
             pacman.reward = delta

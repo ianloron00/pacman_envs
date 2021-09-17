@@ -2,10 +2,6 @@ from stable_baselines3.common.results_plotter import load_results, ts2xy
 from stable_baselines3.common.callbacks import BaseCallback
 import os, numpy as np
 
-from stable_baselines3.common.logger import Figure
-import matplotlib.pyplot as plt
-
-
 class SaveOnBestTrainingRewardCallback(BaseCallback):
     """
     Callback for saving a model (the check is done every ``check_freq`` steps)
@@ -48,13 +44,11 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
                     if self.verbose > 0:
                         print("Saving new best model to {}".format(self.save_path))
                     self.model.save(self.save_path + "/" + self.name)
-
-            figure = plt.figure()
-            figure.add_subplot().plot(np.random.random(3))
-            # plt.plot(x, y)
-
-            # Close the figure after logging it
-            self.logger.record("tmp/figure", Figure(figure, close=True), exclude=("stdout", "log", "json", "csv"))
-            plt.close()
         
         return True
+
+
+
+"""
+tensorboard --logdir tmp/figure
+"""

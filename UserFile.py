@@ -1,12 +1,10 @@
 """
-1- Alterar gráfico de curva de aprendizado, para apresentar desvio padrao
-
 2- Treinar mais o pacman
 
 --------------------------
 - estado do pacman alterado. 
+- Alterado gráfico de curva de aprendizado, para apresentar desvio padrao
 """
-
 
 import numpy as np
 from Environment import *
@@ -15,16 +13,16 @@ import gym, os
 from stable_baselines3 import DQN
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.evaluation import evaluate_policy
-from stable_baselines3.common import results_plotter
 from stable_baselines3.common.results_plotter import plot_results
-import matplotlib.pyplot as plt
+
 from Callback import *
+from Graphs import *
 
 # 'BoardState' | 'Selected'
-extractor = 'Selected'
+extractor = 'BoardState'
 name_model = 'discrete_pacman_' + extractor
 directory = "tmp/"
-isTraining = True
+isTraining = False
 
 env = PacmanEnv.make(extractor=extractor, zoom=2.0)
 env = Monitor(env, directory) 
@@ -32,11 +30,11 @@ env = Monitor(env, directory)
 """
 define replay-buffer:
 buffer_size=1000000, learning_starts=50000
-
+# UserWarning: This system does not have apparently enough memory to store the complete replay buffer 14.10GB > 12.06GB
 Change MlpPolicy from 64 x 64  to 128 x 64.
 """
 #### applying stable_baselines models.
-model = DQN('MlpPolicy',env, tensorboard_log=directory, buffer_size=1000000, 
+model = DQN('MlpPolicy',env, tensorboard_log=directory, buffer_size=500000, 
             learning_starts=10000, exploration_fraction=0.5, exploration_initial_eps=1.0, 
             exploration_final_eps=0.05, verbose=0)
 
@@ -49,10 +47,15 @@ if os.path.exists(directory + name_model+".zip"):
     print("file loaded.")
 
 if isTraining:
-    timesteps = 6e2
+    timesteps = 1.5e3
 
-    callback = SaveOnBestTrainingRewardCallback(check_freq=100, log_dir=directory, name=name_model)
+    callback = SaveOnBestTrainingRewardCallback(check_freq=10000, log_dir=directory, name=name_model)
     model.learn(total_timesteps=timesteps, callback=callback)
+    
+    # plot rewards of training (self-made)
+    plot_training([directory], timesteps, results_plotter.X_TIMESTEPS, "DQN Pacman")
+    plt.savefig(directory + "iDQN " + name_model + '.png')
+    plt.show()
 
     # plot rewards of training 
     plot_results([directory], timesteps, results_plotter.X_TIMESTEPS, "DQN Pacman")
@@ -76,6 +79,7 @@ else:
     plt.close()
 
 env.close()
+
 
 """
 tensorboard --logdir tmp/figure
