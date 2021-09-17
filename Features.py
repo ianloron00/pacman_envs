@@ -3,7 +3,7 @@ import util
 from BFSPolicy import *
 import numpy as np
 
-class Extractor:
+class Selected:
     name_features = np.array(["bias", "#-of-scared-ghosts-1-step-away", "#-of-scared-ghosts-2-steps-away",
                     "#-of-active-ghosts-1-step-away", "#-of-active-ghosts-2-steps-away", "closest-food",
                     "eats-food", "run-to-catch-closest-food", "is-possible-action", "is-not-a-wall",
@@ -80,7 +80,7 @@ class Extractor:
 
         features["pacman-moved"] =  float((next_x, next_y) != (x, y))  
         
-        # 0 - stop, 1 - north, 2 - south, 3 - east, 4 - west
+        # (0 - stop, 1 - north, 2 - south, 3 - east, 4 - west) / 4.0
         last_action = pacman.last_action
         features["last-action"] = self.convert_action_to_value(last_action, pacman.POSSIBLE_ACTIONS)
         
@@ -106,6 +106,36 @@ class Extractor:
 def ghostScaredTime(index, state):
     return state.getGhostState(index).scaredTimer
 
+class BoardState:
+    
+    # number of masks
+    number_features = 4
+
+    def getFeatures(self, pacman, state, action):
+        food = state.getFood()
+        walls = state.getWalls()
+        ghosts = state.getGhostPositions()
+        
+        x, y = state.getPacmanPosition()
+
+        mask_walls = np.array(walls.data).astype(np.float16)
+        
+        mask_food = np.array(food.data).astype(np.float16)
+        
+        mask_pacman = np.zeros(shape=mask_food.shape, dtype=np.float16)
+        mask_pacman[x,y] = 1.0
+
+        mask_ghosts = np.zeros(shape=mask_food.shape, dtype=np.float16)
+
+        for n in range(len(ghosts)):
+            g_x, g_y = (int(i) for i in ghosts[n])
+            val = 1.0 if ghostScaredTime(n + 1,state) > 0 else 0.5
+            mask_ghosts[g_x][g_y] = val
+
+        features = np.concatenate((mask_walls, mask_food, mask_pacman, mask_ghosts))
+
+        features = np.array(np.array_split(features, 4))
+        return features
 """
 walls:
 .---------> x
