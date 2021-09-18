@@ -21,7 +21,7 @@ def plot_training(dirs, num_timesteps, xaxis, title):
     maxx = max(xy[0][-1] for xy in xy_list)
     minx = 0
     
-    EPISODES_WINDOW = 2 # 100
+    EPISODES_WINDOW = 1000
 
     for (i, (x, y)) in enumerate(xy_list):
         
@@ -37,9 +37,7 @@ def plot_training(dirs, num_timesteps, xaxis, title):
             y_err = _y.std() * np.sqrt(1/len(_y) +
                           (_y - y.mean())**2 / np.sum((_y - y.mean())**2))
 
-            print("number samples:\nx: {}\n_y: {}\ny_mean: {}".format(len(x), len(_y), len(y_mean)))
-
-            y_var = 3 * y_err
+            y_var = 5 * y_err
 
             plt.fill_between(x, y_mean - y_var, y_mean + y_var, alpha=0.2)
             plt.fill_between(x, y_mean - y_err, y_mean + y_err, alpha=0.4)

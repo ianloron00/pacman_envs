@@ -108,33 +108,46 @@ def ghostScaredTime(index, state):
 
 class BoardState:
     
-    # number of masks
-    number_features = 4
+    # number of kernels
+    number_features = 6
 
     def getFeatures(self, pacman, state, action):
         food = state.getFood()
         walls = state.getWalls()
         ghosts = state.getGhostPositions()
+        capsules = state.getCapsules()
         
         x, y = state.getPacmanPosition()
 
-        mask_walls = np.array(walls.data).astype(np.float16)
+        kernel_walls = 127 * np.array(walls.data).astype(np.int8)
         
-        mask_food = np.array(food.data).astype(np.float16)
+        kernel_food = 127 * np.array(food.data).astype(np.int8)
         
-        mask_pacman = np.zeros(shape=mask_food.shape, dtype=np.float16)
-        mask_pacman[x,y] = 1.0
+        kernel_pacman = np.zeros(shape=kernel_walls.shape, dtype=np.int8)
+        kernel_pacman[x,y] = 127
 
-        mask_ghosts = np.zeros(shape=mask_food.shape, dtype=np.float16)
+        kernel_ghosts = np.zeros(shape=kernel_walls.shape, dtype=np.int8)
 
         for n in range(len(ghosts)):
             g_x, g_y = (int(i) for i in ghosts[n])
-            val = 1.0 if ghostScaredTime(n + 1,state) > 0 else 0.5
-            mask_ghosts[g_x][g_y] = val
+            val = 127 if ghostScaredTime(n + 1,state) > 0 else -128
+            kernel_ghosts[g_x][g_y] = val
+        
+        kernel_caps = np.zeros(shape=kernel_walls.shape, dtype=np.int8)
+        
+        for c in capsules:
+            kernel_caps[int(c[0])][int(c[1])] = 127 
 
-        features = np.concatenate((mask_walls, mask_food, mask_pacman, mask_ghosts))
+        kernel_data = np.zeros(shape=kernel_walls.shape, dtype=np.int8)
 
-        features = np.array(np.array_split(features, 4))
+        kernel_data[0][0] = len(kernel_food[kernel_food != 0])
+        for g in range(len(ghosts)):
+            kernel_data[1][g] = ghostScaredTime(g + 1, state)
+
+        features = np.concatenate((kernel_walls, kernel_food, kernel_pacman, kernel_ghosts, kernel_caps, kernel_data))
+
+        features = np.array(np.array_split(features, self.number_features))
+
         return features
 """
 walls:

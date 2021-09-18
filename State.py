@@ -1,4 +1,5 @@
 # from Features import *
+from os import stat_result
 import Features
 from gym import spaces
 import numpy as np
@@ -54,8 +55,9 @@ class PacmanState:
         
         if isinstance(extractor, Features.Selected):
             return np.vstack((pacman.state[:-1] , pacman.frame))
+        
         else:
-            pos = extractor.number_features - 1
+            pos = len(pacman.state) - 1
             return np.insert(pacman.state[:-1] , pos,  pacman.frame, axis=0)
 
     
@@ -74,9 +76,9 @@ class PacmanState:
         else:
             walls = pacman.game.state.getWalls()
             shape = (4, number_features, walls.width, walls.height)
-
-            pacman.observation_space = spaces.Box(low=0.0, high=1.0, 
-                                    shape=shape, dtype = np.float16)
+            
+            pacman.observation_space = spaces.Box(low=-128, high=127, 
+                                                  shape=shape, dtype = np.int8)
 
 
     @staticmethod
@@ -103,18 +105,28 @@ class PacmanState:
             pacman.reward = delta
 
         else:
+            """
+            Aumentar linearmente a pontuacao para a comida.
+            Representar tempo.
+            --> alterar número de matrizes.
+            """
             delta = new_score - pacman.last_score
 
+            # sum of all food - sum number of current food.
+            ratio_food = (pacman.n_food - pacman.state[-1][-1][0][0])
+
             if delta < -100:
-                delta = -30
+                delta = -100
             elif delta < 0:
                 delta = 0
+            else:
+                delta = 5 + ratio_food
 
             if pacman.last_action != None and action == Directions.REVERSE[pacman.last_action]:
-                delta -= 9
+                delta -= 0.5 * ratio_food
             
             if action == 'Stop':
-                delta -= 10    
+                delta -= ratio_food    
 
             pacman.last_score = new_score
             pacman.reward = delta

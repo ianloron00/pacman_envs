@@ -59,6 +59,8 @@ class PacmanEnv(gym.Env):
 
         self.eps = 0
 
+        self.n_food = 0
+
 
     def make(extractor='BoardState', **args):
         # create pacman environment
@@ -72,7 +74,7 @@ class PacmanEnv(gym.Env):
 
     def reset(self):
         self.eps += 1
-        if not (self.eps % 200): print("eps: {}".format(self.eps))
+        if not (self.eps % 11000): print("eps: {}".format(self.eps))
         
         # reset reward variables
         self.reward = 0
@@ -96,10 +98,8 @@ class PacmanEnv(gym.Env):
 
 
     def step(self, action):
-        if not (self.eps % 200):
+        if not (self.eps % 11000):
             print(str((action, self.valueToAction(action), self.reward)))
-
-        # print(str((action, self.valueToAction(action), self.reward)))
 
         # convert action to Discrete.
         action = self.valueToAction(action)
@@ -165,6 +165,8 @@ class PacmanEnv(gym.Env):
         self.initialize_action_space()
         self.initialize_observation_space()
 
+        food = np.array(self.game.state.getFood().data)
+        self.n_food = len(food[food == True])
 
     def initialize_action_space(self):      
         # set action space
