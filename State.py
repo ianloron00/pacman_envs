@@ -115,12 +115,14 @@ class PacmanState:
             # sum of all food - sum number of current food.
             ratio_food = (pacman.n_food - pacman.state[-1][-1][0][0])
 
-            if delta < -100:
+            if pacman.game.state.isLose():
                 delta = -100
+            if pacman.game.state.isWin():
+                delta += 500
             elif delta < 0:
                 delta = 0
             else:
-                delta = 5 + ratio_food
+                delta = ratio_food
 
             if pacman.last_action != None and action == Directions.REVERSE[pacman.last_action]:
                 delta -= 0.5 * ratio_food
