@@ -77,7 +77,7 @@ class PacmanEnv(gym.Env):
         self.eps += 1
         self.timestep = 0
 
-        if not (self.eps % 2000): print("eps: {}".format(self.eps))
+        # if not (self.eps % 2000): print("eps: {}".format(self.eps))
         
         # reset reward variables
         self.reward = 0
@@ -101,8 +101,7 @@ class PacmanEnv(gym.Env):
 
 
     def step(self, action):
-        if not (self.eps % 2000):
-            print(str((action, self.valueToAction(action), self.reward)))
+        # if not (self.eps % 2000): print(str((action, self.valueToAction(action), self.reward)))
         
         # convert action to Discrete.
         action = self.valueToAction(action)

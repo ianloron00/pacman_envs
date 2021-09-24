@@ -109,7 +109,7 @@ def ghostScaredTime(index, state):
 class BoardState:
     
     # number of layers
-    number_features = 7
+    number_features = 6
 
     def __init__(self):
         self.layer_visited = []     
@@ -148,12 +148,12 @@ class BoardState:
 
         layer_data = np.zeros(shape=layer_walls.shape, dtype=np.int8)
 
-        layer_data[0][0] = len(layer_food[layer_food != 0])
-        for g in range(len(ghosts)):
-            layer_data[1][g] = ghostScaredTime(g + 1, state)
+        # layer_data[0][0] = len(layer_food[layer_food != 0])
+        # for g in range(len(ghosts)):
+            # layer_data[1][g] = ghostScaredTime(g + 1, state)
 
         features = np.concatenate((self.layer_visited, layer_walls, layer_food, layer_pacman, 
-                                   layer_ghosts, layer_caps, layer_data ))
+                                   layer_ghosts, layer_caps)) # , layer_data ))
 
         features = np.array(np.array_split(features, self.number_features))
         

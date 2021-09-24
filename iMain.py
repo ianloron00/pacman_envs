@@ -1,9 +1,10 @@
 """
+1- Passar para o Google Colab
 2- Treinar mais o pacman
 
 --------------------------
 - estado do pacman alterado. 
-- Alterado gráfico de curva de aprendizado, para apresentar desvio padrao
+- Alterado gráfico de curva de aprendizado, para apresentar desvio padrao.
 """
 
 """
@@ -21,9 +22,6 @@ import gym, os
 from stable_baselines3 import DQN
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.evaluation import evaluate_policy
-# from stable_baselines3.common.results_plotter import plot_results
-# test
-from stable_baselines3.common.utils import get_linear_fn
 
 from iEnvironment import *
 from iCallback import *
@@ -33,9 +31,9 @@ from iGraphs import *
 extractor = 'BoardState'
 name_model = 'discrete_pacman_' + extractor
 directory = "tmp/"
-isTraining = False
+isTraining = True
 
-start = 0.30
+start = 1.0
 end = 0.05
 fraction = 1.0
 
@@ -44,8 +42,8 @@ env = Monitor(env, directory)
 
 #### applying stable_baselines models.
 model = DQN('MlpPolicy', env, tensorboard_log=directory, buffer_size=500000, 
-            learning_starts=10000, exploration_fraction=1.0, exploration_initial_eps=1.0, 
-            exploration_final_eps=0.65, verbose=0, policy_kwargs=dict( net_arch=[128, 64] ))
+            learning_starts=50000, exploration_fraction=0.5, exploration_initial_eps=1.0, 
+            exploration_final_eps=0.05, verbose=0, policy_kwargs=dict( net_arch=[128, 64] ))
 
 def set_expl_variables(model, start=1.0, end=0.05, fraction=1.0):
     model.exploration_fraction = fraction
@@ -74,7 +72,7 @@ elif os.path.exists(directory + name_model + "/" + name_model+".zip"):
 
 
 if isTraining:
-    timesteps = 1e6
+    timesteps = 15e6
 
     print("initial: {}, final: {}, frac: {}, progr: {}".format(
                         model.exploration_initial_eps, 
@@ -82,7 +80,7 @@ if isTraining:
                         model.exploration_fraction,
                         model._current_progress_remaining))
 
-    callback = SaveOnBestTrainingRewardCallback(check_freq=50000, log_dir=directory, name=name_model)
+    callback = SaveOnBestTrainingRewardCallback(check_freq=100, log_dir=directory, name=name_model)
     model.learn(total_timesteps=timesteps, callback=callback)
     
     # plot rewards of training

@@ -112,7 +112,8 @@ class PacmanState:
             delta = new_score - pacman.last_score
 
             # sum of all food - sum number of current food.
-            ratio_food = (pacman.n_food - pacman.state[-1][-1][0][0])
+            layer_food = pacman.state[-1][-1][1]
+            ratio_food = (pacman.n_food - len(layer_food[layer_food != 0]))
 
             if pacman.game.state.isLose():
                 delta = -50 - ratio_food

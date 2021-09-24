@@ -38,9 +38,9 @@ def plot_training(dirs, num_timesteps, xaxis, title):
             y_err = _y.std() * np.sqrt(1/len(_y) +
                           (_y - y.mean())**2 / np.sum((_y - y.mean())**2))
 
-            y_var = 50 * y_err
+            y_var = y_err**2
 
-            plt.fill_between(x, y_mean - y_var, y_mean + y_var, alpha=0.2)
+            plt.fill_between(x, y_mean - y_var, y_mean + y_var, alpha=0.1)
             plt.fill_between(x, y_mean - y_err, y_mean + y_err, alpha=0.4)
 
     plt.xlim(minx, maxx)
@@ -58,3 +58,14 @@ def plt_results(dir, timesteps, plotter, title, name_model):
     plot_results(dir, timesteps, plotter, title)
     plt.savefig(str(dir[0]) + "DQN_res " + name_model + '.png')
     plt.show()
+
+def plt_iter_training(folder_name, x, y):
+    if (len(x) == 0):
+        plt.figure()
+        plt.title("Rewards per Episode")
+        plt.xlabel("timesteps")
+        plt.ylabel("reward")
+        # plt.ion()
+
+    plt.plot(x, y, 'g-')
+    plt.savefig(folder_name + "training.png")

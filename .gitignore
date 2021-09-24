@@ -2,7 +2,8 @@
 /AgentFiles
 /tmp
 /PersonalCallback
-/Images
 submission_autograder.py
 trial.py
 iDQN.py
+/trial
+/images/*

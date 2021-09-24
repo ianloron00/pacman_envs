@@ -1,6 +1,8 @@
 from stable_baselines3.common.results_plotter import load_results, ts2xy
 from stable_baselines3.common.callbacks import BaseCallback
 import os, numpy as np
+from iGraphs import plt_iter_training
+from iCSV import *
 
 class SaveOnBestTrainingRewardCallback(BaseCallback):
     """
@@ -19,18 +21,28 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
         self.save_path = os.path.join(log_dir, name)
         self.best_mean_reward = -np.inf
         self.name = name
+        self.episode = 0
 
     def _init_callback(self) -> None:
         # Create folder if needed
         if self.save_path is not None:
             os.makedirs(self.save_path, exist_ok=True)
+        plt_iter_training("images/", [], [])
+        ini_csv()
 
     def _on_step(self) -> bool:
         if self.n_calls % self.check_freq == 0:
 
             # Retrieve training reward
             x, y = ts2xy(load_results(self.log_dir), 'timesteps')
+            print(len(x))
+
             if len(x) > 0:
+                
+                save_in_csv(x[self.episode : ] ,y[self.episode : ])
+                
+                plt_iter_training("images/", x, y)                
+
                 # Mean training reward over the last 100 episodes
                 mean_reward = np.mean(y[-100:])
                 if self.verbose > 0:
@@ -49,12 +61,11 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
                     if self.verbose > 0:
                         print("Saving new best model to {}".format(self.save_path))
                     self.model.save(path)
+
+                # update former episode's benchmark
+                self.episode = len(x)
                     
-                    # print("saving replay buffer")
-                    # self.model.save_replay_buffer(path)
         return True
-
-
 
 """
 tensorboard --logdir tmp/figure
