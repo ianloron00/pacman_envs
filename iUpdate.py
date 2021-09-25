@@ -105,20 +105,18 @@ class PacmanState:
 
         else:
             """
-            Aumentar linearmente a pontuacao para a comida.
-            Representar tempo.
-            --> alterar número de matrizes.
+            Increases linearly punctuation to food.
             """
             delta = new_score - pacman.last_score
 
             # sum of all food - sum number of current food.
-            layer_food = pacman.state[-1][-1][1]
+            layer_food = pacman.state[-1][2]
             ratio_food = (pacman.n_food - len(layer_food[layer_food != 0]))
 
             if pacman.game.state.isLose():
-                delta = -50 - ratio_food
+                delta = -50 - ratio_food/2
             elif pacman.game.state.isWin():
-                delta = 2000
+                delta = 1000
             elif delta < 0:
                 delta = 0
             else:

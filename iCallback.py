@@ -35,11 +35,10 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
 
             # Retrieve training reward
             x, y = ts2xy(load_results(self.log_dir), 'timesteps')
-            print(len(x))
 
             if len(x) > 0:
                 
-                save_in_csv(x[self.episode : ] ,y[self.episode : ])
+                save_in_csv(x[self.episode : ], y[self.episode : ])
                 
                 plt_iter_training("images/", x, y)                
 
@@ -61,6 +60,10 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
                     if self.verbose > 0:
                         print("Saving new best model to {}".format(self.save_path))
                     self.model.save(path)
+
+                # buffer's callback
+                self.model.save_replay_buffer(self.log_dir + "/replay_buffer")
+                print("replay buffer saved.")
 
                 # update former episode's benchmark
                 self.episode = len(x)

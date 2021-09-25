@@ -9,11 +9,6 @@
 
 """
 https://stable-baselines3.readthedocs.io/en/master/modules/dqn.html
-
-CnnPolicy - para Imagens
-MultiInputPolicy - para estados do tipo dicionário
-
-"learning_rate deveria ser alterado? (padrao 0.0001)"
 """
 
 import numpy as np
@@ -31,56 +26,60 @@ from iGraphs import *
 extractor = 'BoardState'
 name_model = 'discrete_pacman_' + extractor
 directory = "tmp/"
-isTraining = True
-
-start = 1.0
-end = 0.05
-fraction = 1.0
-
-env = PacmanEnv.make(extractor=extractor, zoom=2.0)
-env = Monitor(env, directory) 
-
-#### applying stable_baselines models.
-model = DQN('MlpPolicy', env, tensorboard_log=directory, buffer_size=500000, 
-            learning_starts=50000, exploration_fraction=0.5, exploration_initial_eps=1.0, 
-            exploration_final_eps=0.05, verbose=0, policy_kwargs=dict( net_arch=[128, 64] ))
-
-def set_expl_variables(model, start=1.0, end=0.05, fraction=1.0):
-    model.exploration_fraction = fraction
-    model.exploration_initial_eps = start
-    model.exploration_final_eps = end
-    model.exploration_rate = model.exploration_initial_eps
-    model._setup_model()
-
 
 if not os.path.exists(directory):
     os.mkdir(directory)
 
+# True - trains de agent. False - evaluates the NN.
+isTraining = True
+
+env = PacmanEnv.make(extractor=extractor, zoom=2.0)
+env = Monitor(env, directory) 
+
+#### applying stable_baselines3 model.
+model = DQN('MlpPolicy', env, tensorboard_log=directory, buffer_size=200_000, 
+            learning_starts=50_000, exploration_fraction=0.5, exploration_initial_eps=1.0, 
+            exploration_final_eps=0.05, verbose=0, policy_kwargs=dict( net_arch=[128, 64] ))
+
+def get_expl_variables(model):
+    start = model.exploration_rate
+    end = model.exploration_final_eps
+    fraction = max(0, (model.exploration_rate - model.exploration_final_eps)/(model.exploration_initial_eps - model.exploration_final_eps) * model.exploration_fraction)
+    return start, end, fraction
+
+def set_expl_variables(model, start=1.0, end=0.05, fraction=1.0):
+    model.exploration_initial_eps = start
+    model.exploration_final_eps = end
+    model.exploration_fraction = fraction
+    model._setup_model()
+
+def load_model(model, zip_dir, buffer_dir, env):
+    model = model.load(zip_dir, env=env)
+    
+    model.load_replay_buffer(buffer_dir + "/replay_buffer")
+
+    start, end, fraction = get_expl_variables(model)
+    set_expl_variables(model, start, end, fraction)
+    return model
 
 if os.path.exists(directory + name_model+".zip"):
-    model = model.load(directory + name_model + ".zip", env=env)    
+    model = load_model(model, directory + name_model + ".zip", directory, env)
     print("model loaded.")
 
-    set_expl_variables(model, start, end, fraction)
-
-
-elif os.path.exists(directory + name_model + "/" + name_model+".zip"):
-    model = model.load(directory + name_model + "/" + name_model+".zip", env=env)
+elif os.path.exists(directory + name_model + "/" + name_model + ".zip"):
+    model = load_model(model, directory + name_model + "/" + name_model + ".zip", directory, env=env)
     print("callback loaded.")
-
-    set_expl_variables(model, start, end, fraction)
-
 
 if isTraining:
     timesteps = 15e6
 
-    print("initial: {}, final: {}, frac: {}, progr: {}".format(
+    print("initial: {}, final: {}, frac: {}, remaining: {}".format(
                         model.exploration_initial_eps, 
                         model.exploration_final_eps, 
                         model.exploration_fraction,
                         model._current_progress_remaining))
 
-    callback = SaveOnBestTrainingRewardCallback(check_freq=100, log_dir=directory, name=name_model)
+    callback = SaveOnBestTrainingRewardCallback(check_freq=100_000, log_dir=directory, name=name_model)
     model.learn(total_timesteps=timesteps, callback=callback)
     
     # plot rewards of training
@@ -91,7 +90,7 @@ if isTraining:
     print("model saved.")
 
 else:
-    rewards = evaluate_policy(model, env, n_eval_episodes=100, render=False, return_episode_rewards=True)
+    rewards = evaluate_policy(model, env, n_eval_episodes=100, render=True, return_episode_rewards=True)
 
     # plot results from policy evaluation
     scores=rewards[0]

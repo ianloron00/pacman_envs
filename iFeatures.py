@@ -146,14 +146,9 @@ class BoardState:
         for c in capsules:
             layer_caps[int(c[0])][int(c[1])] = 127 
 
-        layer_data = np.zeros(shape=layer_walls.shape, dtype=np.int8)
+        features = np.concatenate((self.layer_visited, layer_walls, layer_food, 
+                                        layer_pacman, layer_ghosts, layer_caps))
 
-        # layer_data[0][0] = len(layer_food[layer_food != 0])
-        # for g in range(len(ghosts)):
-            # layer_data[1][g] = ghostScaredTime(g + 1, state)
-
-        features = np.concatenate((self.layer_visited, layer_walls, layer_food, layer_pacman, 
-                                   layer_ghosts, layer_caps)) # , layer_data ))
 
         features = np.array(np.array_split(features, self.number_features))
         
